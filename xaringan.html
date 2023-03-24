@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Xaringan Slide Experiment  </title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Tongmeng Xie" />
+    <script src="libs/header-attrs-2.18/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Xaringan Slide Experiment <br/>
+]
+.author[
+### Tongmeng Xie
+]
+.institute[
+### CASA
+]
+.date[
+### (u2023-03-24)
+]
+
+---
+
+class: inverse, center, middle
+
+
+---
+class: inverse, center, middle
+# Approach Methodology &amp; Output
+---
+
+--- 
+## Workflow and Methodology
+- To make policies implementable
+
+  - Need to propose real analysis workflow
+  
+  - Give prototypes illustrating how EO data and remote sensing can help
+  
+  - Fit the workflow into the flood solution
+  
+  - Work on the chaining of function modules and potential automisation of pipeline
+  
+- How can these facilitate minimising risks for people, governments and more
+
+  - How are information gaps closed
+  
+  - How are losses prevented
+  
+  - Identify persisting risks
+  
+---
+
+## Flood Forecasting - A Quick Review
+### The old-fashioned way - Hydrological model 
+Uses historical data on precipitation, runoff, and other factors to predict flood occurrences. 
+Relies on physical equations and mathematical representations of the water cycle, e.g.:
+- Continuity Equation Balances water storage (∆S) with inflow (I) and outflow (O): 
+  \begin{equation}
+    \Delta S = I - O
+    \end{equation}
+- Runoff Estimation: 
+`$$Q = (P - Ia)^2 / (P - Ia + S)$$`
+  Where
+  - Q: direct runoff (depth)
+  - P: direct runoff (depth) 
+  - Ia: initial abstraction, representing the water intercepted by vegetation, infiltration, and surface storage
+  - S: potential maximum retention (depth), depending on soil type, land use, antecedent moisture conditions
+  
+&lt;div class="footnotes"&gt;
+&lt;small&gt;
+- Reference: US Army Corps of Engineers, Hydrologic Engineering Center. (n.d.). &lt;a href="https://www.hec.usace.army.mil/software/hec-ras/" target="_blank"&gt;HEC-RAS&lt;/a&gt;. 
+&lt;/small&gt;
+&lt;/div&gt;
+
+---
+### The old-fashioned way - Hydrological model 
+
+Example of simulating watershed on a map of Digital Elevation Model (DEM)
+- Continuity Equation 
+  - Ensures the water balance
+  - Tracks the flow of water (through e.g. surface water, soil moisture and groundwater)
+- Runoff Estimation: 
+  - quantifying the amount of water 
+
+
+&lt;video width="1440" height="300" autoplay&gt;
+&lt;source src="vids/400SqMileWatershed.mpeg" type="video/mp4"&gt;
+&lt;/video&gt;
+
+
+&lt;div class="footnotes"&gt;
+&lt;small&gt;
+- Reference: US Army Corps of Engineers, Hydrologic Engineering Center. (n.d.). &lt;a href="https://www.hec.usace.army.mil/software/hec-ras/" target="_blank"&gt;HEC-RAS&lt;/a&gt;. 
+&lt;/small&gt;
+&lt;/div&gt;
+---
+### The old-fashioned way - Hydrological model 
+DEM-based hydrological models 
+- Identify low-lying areas and floodplains in the urban landscape that are more susceptible to flooding. 
+- Inform decisions
+  - Planners: Floodplain zoning and land-use planning ( flood-resistant land uses, such as parks and recreational areas, to flood-prone regions.)
+  - Emergency response teams can prioritise levees and floodwalls construction in certain areas
+  - Design evacuation plans to minimise casualties
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="img/400SqMileWatershed - frame at 0m11s.jpg" alt="A frame slice of Watershed Simulation, Credit: US Army Corps of Engineers, Hydrologic Engineering Center. (n.d.). &amp;lt;a href=&amp;quot;https://www.hec.usace.army.mil/software/hec-ras/&amp;quot; target=&amp;quot;_blank&amp;quot;&amp;gt;HEC-RAS&amp;lt;/a&amp;gt;.  https://doi.org/10.3390/w13243520 " width="25%" /&gt;
+&lt;p class="caption"&gt;A frame slice of Watershed Simulation, Credit: US Army Corps of Engineers, Hydrologic Engineering Center. (n.d.). &lt;a href="https://www.hec.usace.army.mil/software/hec-ras/" target="_blank"&gt;HEC-RAS&lt;/a&gt;.  https://doi.org/10.3390/w13243520 &lt;/p&gt;
+&lt;/div&gt;
+
+---
+class: inverse, center, middle
+# Calling for a pipeline
+
+---
+
+### Persisting risks - Inflexibility in both time and space
+
+### If ——
+ - We shift the area of interest
+  
+ - Or, Progress from, say, 2022 to 2023
+
+--
+
+We have to redo watershed simulation with new data.
+
+--
+
+But we want to minimise avoidable repetitive human work, e.g., manual simulation of watershed for each date and each sub-zone of Kuala lumpur.
+
+--
+
+### So how do we improve temporal and spatial transferability and build a data pipeline?
+
+--
+
+### And what about automation? 
+
+ 
+---
+### Machine-learning based prediction - A blackbox considering numerous factors
+
+| Data Pipeline Step | Description |
+| --- | --- |
+| Data Acquirement | Object extraction of Multi-spetcral and Radar data for Kuala Lumpur -&gt; Data fusion on object-based level -&gt; Image classification to get elevation, slope, soil type, substrate, land cover, NDVI, land use, imperviousness, distance to river, and distance to road |
+| Pre-processing | Standardize with EPSG:3168 coordinate system -&gt; convert vector to raster maps -&gt; clip to Kuala Lumpur boundarie -&gt;  resample to 1m resolution -&gt; convert raster images to numerical data with 10m grid size using Rasterio |
+| Feature Selection | Perform multicollinearity diagnosis test to exclude similar features -&gt; Use features with VIF less than 10 in ANN models |
+| Data Balancing | Balance data with oversampling and undersampling due to imbalanced flood risk distribution. Adjust non-flood areas (98%, 95%, 90% for 30-, 100-, and 1000-year events) and level 4 risk areas (0.01% and 0.06% for 30- and 100-year events) |
+| Model Selection &amp; Assessment | Apply NB, perceptron, ANN, and CNN models for 30-, 100-, and 1000-year flood events. Evaluate performance using following metrics |
+---
+## Flood prediction
+### Metrics
+Accuracy, F-beta score, and receiver operating characteristic (ROC) curve, as well as the oversampling and undersampling techniques used to address the issue of data imbalance. 
+
+---
+## Flood prediction
+### A comparison across models:
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="img/Prediction_Accuracy.png" alt="Credit: Li Z, Liu H, Luo C, Fu G. Assessing Surface Water Flood Risks in Urban Areas Using Machine Learning. Water. 2021; 13(24):3520. https://doi.org/10.3390/w13243520 " width="100%" /&gt;
+&lt;p class="caption"&gt;Credit: Li Z, Liu H, Luo C, Fu G. Assessing Surface Water Flood Risks in Urban Areas Using Machine Learning. Water. 2021; 13(24):3520. https://doi.org/10.3390/w13243520 &lt;/p&gt;
+&lt;/div&gt;
+
+---
+class: inverse, middle
+# How Can Flood Prediction Help Kuala Lumpur: 
+
+
+- ### How are information gaps closed
+
+- ### How are loss prevented
+
+- ### Identify persisting risks
+
+  
+---
+## Flood Risk Management - Flood Prediction
+Significant Savings in Case Studies
+- European Union's Floods Directive: €460 million saved in avoided damages (2006-2015)
+
+- Iowa Flood Center: $96 million saved in flood damage costs (2010-2015)
+
+- Flood Forecasting Centre (UK): £1.2 billion saved in potential damages (2009-2014)
+
+&lt;div class="footnotes"&gt;
+&lt;small&gt;
+References: - European Environment Agency (2016). Flood risks and environmental vulnerability ↩
+
+- Demir, I., &amp; Krajewski, W. F. (2016). Towards an information system for the socially vulnerable groups during flood disasters ↩
+
+- &lt;a href="https://uiowa.edu/" target="_blank"-&gt;Environment Agency and Met Office (2015). Flood Forecasting Centre Five Year Review 2009-2014&lt;/a&gt;. 
+&lt;/small&gt;
+&lt;/div&gt;
+
+---
+
+## Are information gaps "closed"? - Managing probability
+
+ ### What if ——
+ Due to a spatial mismatch between data scope and decision-making scope, we overlooked a location with a 99% chance of flooding and sent our response team to a place with only a 65% (what we consider to be the highest) likelihood of flooding.
+ 
+--
+ 
+In this scenario, the emergency response strategy fails. Therefore, keeping comprehensive data input and strategy output is essential.
+ 
+--
+
+### The trikiness of dealing with probability
+
+--
+
+  - Should we allocate resources proportional to the probability of flood ocurrence?
+
+--
+  
+  - Or, should we design a response priority hierarchy considering both likelihood and potential harm?
+  
+--
+
+  - Decide with a function design? Human-added weights? Machine-learned weights?
+
+
+---
+class: inverse, center, middle
+
+
+# Does Prediction Suffice?
+---
+## Is prediction enough for flood risk management?
+### Pros and cons of ML-based flood prediction
+| Pros | Cons |
+| --- | --- |
+| Mature tech-flow | Computation-intense |
+| Promising accuracy | Prone to Data Flaws |
+| Utilising ML/DL models | Cumbersome to deployment|
+| Prediction Based on Abundant information | Data-expensive |
+| Almost always generate outcome | But Untimely! |
+---
+class: inverse, center, middle
+# Introducing Real-time Monitoring
+---
+## Flood risk management - Real-time monitoring
+### Synthetic Aperture Radar (SAR)
+- SAR: Active remote sensing technology that can penetrate clouds, operate day or night, and provide high-resolution imagery1
+
+- Real-time flood monitoring: Timely and accurate information on flood extent, duration, and impact for emergency response and management
+
+### Benefits of SAR-based flood monitoring
+- Rapid assessment: Quick acquisition and processing of data, enabling faster response to flood events
+
+- Wide-area coverage: Large-scale flood monitoring, even in remote or inaccessible areas
+
+- All-weather capability: Reliable data collection, regardless of weather conditions or time of day
+
+&lt;div class="footnotes"&gt;
+&lt;small&gt;
+References: - NASA Jet Propulsion Laboratory (2021). ARIA Project. https://aria.jpl.nasa.gov/
+&lt;/small&gt;
+&lt;/div&gt;
+
+---
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="img/SAR.webp" alt="FPM comparison with GSI aerial and Planet optical imagery for Fukushima. Credit: https://doi.org/10.1038/s41597-020-0443-5" width="70%" /&gt;
+&lt;p class="caption"&gt;FPM comparison with GSI aerial and Planet optical imagery for Fukushima. Credit: https://doi.org/10.1038/s41597-020-0443-5&lt;/p&gt;
+&lt;/div&gt;
+
+
+---
+## Risks of Real-time Monitoring 
+
+ - ### How real-time is real time? 
+  - Does a 5-seconds delay in data transmission fail an essential decision-making? 
+  
+--
+
+ - ### How to quantify tolerance thresholds in regards of delay, error and bias?
+  - A sharp cutoff or a fuzzy one?
+
+--
+
+ - ### What degree of accuracy? Managing response time of
+  - Data acquirement, transmission and calculation
+  - Human-based decision-making
+  
+  ### Incurs extra cost. The estimation is almost always NOT deterministic.
+
+---
+class: inverse, center, middle
+# When AIoT Comes In
+
+---
+## AIoT comes to aid
+
+- Introducing AIoT (Artificial Intelligence of Things) can lead to more efficient, accurate, and timely flood prediction systems.
+
+| MLp-Pros | ML-Cons | AIoT Solution |
+| --- | --- | --- |
+| Mature tech-flow | Computation-intense | Edge computing for localized data processing |
+| Promising accuracy | Prone to Data Flaws | Diverse IoT data sources improve model robustness |
+| Utilizing ML/DL models | Cumbersome to deployment | Scalable and modular IoT deployment |
+| Prediction Based on Abundant information | Data-expensive | Edge computing and data compression reduce data costs |
+| Almost always generate outcome | Untimely | Real-time data enables timely predictions and responses |
+
+---
+## AIoT comes to aid
+Connects remote-sensing devices to the IoT network, enabling seamless data flow between
+ - Devices
+ - Edge computing nodes
+ - Cloud platforms
+ 
+(Supprted by communication protocols such as MQTT, LoRaWAN, or Zigbee)
+
+--
+
+- To supplement EO data with real-time, hyperlocal data collected from IoT devices:
+ - Water level sensors
+ - Soil moisture sensors
+ - Weather stations
+
+- To help capture local variations and enhances overall model performance, perform data fusion, i.e., combine:
+  - IoT-generated data
+  - EO data 
+  - SAR imagery and other remote sensing datasets
+
+---
+## AIoT comes to aid
+### Automatical iteration of models:
+
+With ground truth data continuously provided by IoT devices, models are evaluated and calibrated by:
+
+ - Real-time ground truth data input from nature
+ 
+ - Feedback from decision-making models and human 
+  
+Adaptive-learning models adjust and improve predictive capabilities over time, allowing for responding to
+
+ - Changing environmental conditions 
+ 
+ - Extreme weather events
+
+---
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="img/Iowa_alert.png" alt="Real-time water levels and stage heights with flood alert levels, and flood forecast. Credit: https://ifis.iowafloodcenter.org/ifis/" width="100%" /&gt;
+&lt;p class="caption"&gt;Real-time water levels and stage heights with flood alert levels, and flood forecast. Credit: https://ifis.iowafloodcenter.org/ifis/&lt;/p&gt;
+&lt;/div&gt;
+---
+class: inverse, center, middle
+# What Else Is Possible?
+
+
+---
+##Outlook - Automated decision-making 
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="img/AIoT_workflow.png" alt="AIoT Architecture for auto-decision-making" width="68%" /&gt;
+&lt;p class="caption"&gt;AIoT Architecture for auto-decision-making&lt;/p&gt;
+&lt;/div&gt;
+
+---
+##Outlook - Automated decision-making based on Real-time analytics
+
+- Edge devices take in real-world data -&gt; 
+
+- Edge computation nodes share computation tasks (pre-processing, training, validation, etc.) in parallel -&gt; 
+
+- Predictions generated by ever-updating models are compared through and integrated at decision centre / A ensemble model is given -&gt; 
+
+- Strategy coping with status quo is auto-generated  
+
+--
+
+Vulnerable in that the system is very hackable (Data input, analysis, strategy output are all handled by AI):
+
+- What if the edge devices in a crucial area goes offline?
+
+- How to make sure the ensemble always weight towards maximum survival of people?
+
+--
+
+We emphasise the disaster awareness of human being: **All final decisions require expert review and human approval**. So the solution network can be scalable, elastic to damage, and serves the public's well-being correctly.
+
+---
+## References
+
+IOWA FLOOD INFORMATION SYSTEM. https://ifis.iowafloodcenter.org/ifis/
+
+Li, Z. et al. (2021) ‘Assessing Surface Water Flood Risks in Urban Areas Using Machine Learning’, Water, 13(24), p. 3520. doi:10.3390/w13243520.
+
+
+Malaysia - Vulnerability | Climate Change Knowledge Portal (no date). Available at: https://climateknowledgeportal.worldbank.org/country/malaysia/vulnerability (Accessed: 23 February 2023).
+
+NASA Jet Propulsion Laboratory (2021). ARIA Project. https://aria.jpl.nasa.gov/
+
+Tay, C.W.J., Yun, SH., Chin, S.T. et al. Rapid flood and damage mapping using synthetic aperture radar in response to Typhoon Hagibis, Japan. Sci Data 7, 100 (2020). https://doi.org/10.1038/s41597-020-0443-5'
+
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
