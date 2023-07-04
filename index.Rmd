@@ -25,7 +25,7 @@ style_mono_light(
   title_slide_background_image = "img/pic2.jpeg"
 )
 ```
-# Approach Methodology & Output
+# Flood Prediction and Monitoring
 ---
 
 
